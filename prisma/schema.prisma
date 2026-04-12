@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String            @id @default(cuid())
+  email        String            @unique
+  password     String
+  name         String?
+  role         Role              @default(USER)
+  baseProgress Int               @default(0)
+  progress     ReadingProgress[]
+  createdAt    DateTime          @default(now())
+
+  @@map("users")
+}
+
+model Document {
+  id         String            @id @default(cuid())
+  title      String
+  fileName   String
+  overview   String            @db.Text
+  keyPoints  Json
+  sections   Json
+  highlights Json
+  pages      Json
+  uploadedBy String?
+  createdAt  DateTime          @default(now())
+  progress   ReadingProgress[]
+
+  @@map("documents")
+}
+
+model ReadingProgress {
+  id         String   @id @default(cuid())
+  userId     String
+  documentId String
+  page       Int      @default(0)
+  updatedAt  DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, documentId])
+  @@map("reading_progress")
+}
